@@ -1,0 +1,99 @@
+#!/usr/bin/python
+# Author: Dean Serenevy  <deans@apcisystems.com>
+# This software is Copyright (c) 2013 APCI, LLC. All rights reserved.
+from __future__ import division, absolute_import, print_function
+
+import sys
+from os.path import split, join, dirname, abspath, isfile, isdir, basename
+sys.path.append("pylib")
+sys.path.append(join(dirname(dirname(abspath(__file__))), "pylib"))
+
+import re
+
+import apci
+import logging
+apci.save_logs("gal2dmc")
+logger = logging.getLogger('apci.gal2dmc')
+
+from apci.galilfile import GalilFile
+import apci.lfw.machine
+
+
+import argparse
+def getopts():
+    parser = argparse.ArgumentParser(description="""
+compile .gal file into a .dmc
+
+Generates files ready for use in galiltools. The general convention used is
+that ".gal" files are template files which can use indenting and arbitrary
+comments. These ".gal" files should be compiled into ".dmc" files which
+will fill in template variables, remove offensive space and optionally
+perform minification to help stay within line limits.
+"""
+)
+
+    parser.add_argument('--output', '-o', help='output file or directory for compiled files (default STDOUT)')
+    parser.add_argument('--vars', '-v', help='JSON file containing variable values to use in template')
+    parser.add_argument('--minify', '-m', action='store_true', help='enable minification')
+    parser.add_argument('--no-trim', '-t', action='store_true', help='show (do not trim) whitespace')
+
+    parser.add_argument('file', type=str, nargs='+', help='files to compile')
+    return parser.parse_args()
+
+
+def MAIN(argv):
+    for f in argv.file:
+        # Build template
+        (path, fname) = split(f)
+        gf = GalilFile(path if len(path) else ".")
+
+        # Load Variables
+        if argv.vars:
+            data = apci.load_json(argv.vars)
+        elif isfile("machine.json"):
+            data = apci.load_json("machine.json")
+        else:
+            logger.warning('Loading Default Machine Definition')
+            data = apci.lfw.machine.default_config
+
+        # Validate!
+        apci.lfw.machine.check_machine(data)
+
+        # Process Templates
+        if argv.minify:
+            dmc = gf.load(fname, data)
+        elif argv.no_trim:
+            dmc = gf.render(fname, data)
+        else:
+            dmc = gf.trim(gf.render(fname, data))
+
+        for err in gf.lint(dmc, warnings=True):
+            logger.warning(err)
+
+        # Write out results
+        if not argv.output or '-' == argv.output:
+            print(dmc)
+        else:
+            fout = get_output(f, argv.output)
+            open(fout, "w").write(dmc + "\n")
+
+
+
+def get_output(source, target):
+    fout = re.sub(r'\.gal', '.dmc', basename(source))
+    if fout == basename(source) or not re.match(r'\.dmc', fout):
+        fout += '.dmc'
+
+    if target and isdir(target):
+        return join(target, fout)
+
+    elif target:
+        return target
+
+    else:
+        return join(dirname(source), fout)
+
+
+
+if __name__ == '__main__':
+    MAIN(getopts())
