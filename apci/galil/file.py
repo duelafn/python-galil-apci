@@ -26,7 +26,7 @@ from apci.jinja2.error import RaiseExtension
 import math
 from math import sqrt
 
-logger = logging.getLogger("apci.GalilFile")
+logger = logging.getLogger("apci.galil.file")
 
 
 axis2idx = { "A": 0, "B": 1, "C": 2, "D": 3,
@@ -274,7 +274,7 @@ class GalilFile(object):
         comment = re.compile(r"(?:^|;)\s*(?:'|NO|REM).*")
 
         # Operators with wrapped space. Match will be replaced with \1.
-        operator_spaces = re.compile(r"\s*([,;=\+\-*/%<>\(\)]|<>|>=|<=)\s*")
+        operator_spaces = re.compile(r"\s*([,;=\+\-*/%<>\(\)\[\]]|<>|>=|<=)\s*")
 
         # A line containing just a label
         label_line = re.compile(r"^#[a-zA-Z0-9]{1,7}$")

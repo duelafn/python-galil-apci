@@ -15,7 +15,7 @@ import logging
 apci.save_logs("gal2dmc")
 logger = logging.getLogger('apci.gal2dmc')
 
-from apci.galilfile import GalilFile
+from apci.galil.file import GalilFile
 import apci.lfw.machine
 
 
