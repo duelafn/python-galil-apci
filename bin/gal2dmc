@@ -16,7 +16,7 @@ apci.save_logs("gal2dmc")
 logger = logging.getLogger('apci.gal2dmc')
 
 from apci.galil.file import GalilFile
-import apci.lfw.machine
+from apci.lfw.machine import Machine
 
 
 import argparse
@@ -49,23 +49,23 @@ def MAIN(argv):
 
         # Load Variables
         if argv.vars:
-            data = apci.load_json(argv.vars)
+            machine = Machine.load(argv.vars)
         elif isfile("machine.json"):
-            data = apci.load_json("machine.json")
+            machine = Machine.load("machine.json")
         else:
             logger.warning('Loading Default Machine Definition')
-            data = apci.lfw.machine.default_config
+            machine = Machine()
 
         # Validate!
-        apci.lfw.machine.check_machine(data)
+        machine.validate()
 
         # Process Templates
         if argv.minify:
-            dmc = gf.load(fname, data)
+            dmc = gf.load(fname, machine)
         elif argv.no_trim:
-            dmc = gf.render(fname, data)
+            dmc = gf.render(fname, machine)
         else:
-            dmc = gf.trim(gf.render(fname, data))
+            dmc = gf.trim(gf.render(fname, machine))
 
         for err in gf.lint(dmc, warnings=True):
             logger.warning(err)

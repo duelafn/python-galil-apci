@@ -16,6 +16,7 @@ import logging
 
 import apci
 import apci.galil
+from apci import Machine
 import jinja2
 
 import collections
@@ -283,14 +284,14 @@ class GalilFile(object):
         label_start = re.compile(r"^#")
 
         # Joinable Lines (combinations of the following):
-        #    - Simple Assignments: assignments to our variables (start with lower)
+        #    - Simple Assignments: assignments to our variables or arrays (start with lower)
         #    - ENDIF, ELSE
         # NOTE: a joinable line never ends in a semicolon - this provides a way to force a line break
         joinable_line = re.compile(r"""
             ^(?: (?:^|;) \s*
                  (?:
-                     (?:[~^][a-z]|[a-z][a-zA-Z0-9]{0,7})
-                         \s* = \s* (?:[~^][a-z]|[a-z][a-zA-Z0-9]{0,7}|"[a-zA-Z0-9]{0,6}"|[-0-9.]+)
+                     (?:[~^][a-z]|[a-z][a-zA-Z0-9]{0,7}(?:\[[^\];]+\])?)
+                         \s* = \s* [^\;]+
                    | ENDIF
                    | ELSE
                  )
@@ -374,20 +375,24 @@ class GalilFile(object):
         return "\n".join(lines)
 
 
-    def extra_context(self, context):
+    def build_context(self, name, context):
         """
         Creates some convenience variables from the configuration. Created are:
 
           - A, B  - the axis labels for the primary and secondary motors
-          - GEAR_MODE, INDEP_MODE  - booleans indicating which mode is set.
         """
-        return {
+        ctx = {
             "A": context["primary"]["axis"],
             "B": context["secondary"]["axis"],
-            "GEAR_MODE":  (context["motion_mode"] == "geared"),
-            "INDEP_MODE": (context["motion_mode"] == "independent"),
         }
 
+        if isinstance(context, Machine):
+            ctx['m'] = context
+            ctx.update( context.settings )
+        else:
+            ctx.update( context )
+
+        return ctx
 
     def render(self, name, context):
         """
@@ -395,8 +400,7 @@ class GalilFile(object):
         inclusions), but does not perform whitespace trimming or
         minification.
         """
-        ctx = self.extra_context(context)
-        ctx.update(context)
+        ctx = self.build_context(name, context)
         content = self.env.get_template(name).render(ctx)
         # double semicolons confuse galil but are somewhat easy to
         # introduce when templating. Strip them out here:
