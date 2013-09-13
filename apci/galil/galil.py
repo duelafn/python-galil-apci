@@ -330,7 +330,7 @@ class Galil(ExternalGalil.Galil):
         except ExternalGalil.CommandError:
             return None
 
-    def ensureBoardProgram(self, name, program, run_auto=True):
+    def ensureBoardProgram(self, name, program, run_auto=True, force=False):
         """
         Examines the hash of the current program on the galil board. If it
         matches the hash of the parameter, nothing is done. Otherwise, the
@@ -343,7 +343,8 @@ class Galil(ExternalGalil.Galil):
         program_str = str(program)
         new_hash    = self.computeProgramHash(program_str)
 
-        if ( not self.get("xPrgOK")
+        if ( force
+             or  not self.get("xPrgOK")
              or  self.getBoardProgramName() != name
              or  self.getBoardProgramHash() != new_hash
            ):
@@ -360,6 +361,10 @@ class Galil(ExternalGalil.Galil):
 
         if run_auto and self["_XQ0"] < 0:
             logger.info("Restarting program %s (%s)", name, new_hash)
-            self.command('XQ#AUTO')
+            try:
+                self.command('XQ#AUTO')
+            except:
+                self["xPrgOK"] = 0
+                return self.ensureBoardProgram(name, program, run_auto, force=True)
 
         return False
