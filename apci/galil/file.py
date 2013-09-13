@@ -16,7 +16,7 @@ import logging
 
 import apci
 import apci.galil
-from apci import Machine
+from apci import Machine, C
 import jinja2
 
 import collections
@@ -380,11 +380,13 @@ class GalilFile(object):
         Creates some convenience variables from the configuration. Created are:
 
           - A, B  - the axis labels for the primary and secondary motors
+          - apci.constants constants
         """
         ctx = {
             "A": context["primary"]["axis"],
             "B": context["secondary"]["axis"],
         }
+        ctx.update( C )
 
         if isinstance(context, Machine):
             ctx['m'] = context

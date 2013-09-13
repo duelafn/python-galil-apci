@@ -143,12 +143,12 @@ class Galil(ExternalGalil.Galil):
                 stash[key] = val
         return ret
 
-    def getString(self, name, dflt=None, stash=None):
+    def get_string(self, name, dflt=None, stash=None):
         """
         Executes an expression (usually just a variable name) and
         interprets the result as a galil string.
 
-        E.g.: galil.getString("xPrgName") -> "Homing"
+        E.g.: galil.get_string("xPrgName") -> "Homing"
         (by issuing the command "MG {$8.4}, xPrgName" and decoding the result)
 
         @param name: The variable name to read.
@@ -158,14 +158,14 @@ class Galil(ExternalGalil.Galil):
             executed, the return value will be stored in the stash. If the
             default is returned, the stash will not be altered.
         """
-        stash_key = u"«getString» " + name
+        stash_key = u"«get_string» " + name
         if stash is not None and stash_key in stash:
             return stash[stash_key]
 
         try:
             coded = self.command("MG {{$8.4}}, {}".format(name))
             val = self.galil_hex_to_string(coded)
-            if GALIL_TRACE: logger.debug("galil.getString(%s) -> '%s'", name, val)
+            if GALIL_TRACE: logger.debug("galil.get_string(%s) -> '%s'", name, val)
             if stash is not None:
                 stash[stash_key] = val
             return val
@@ -187,7 +187,7 @@ class Galil(ExternalGalil.Galil):
         if stash is not None:
             stash[cmd] = ret
             for key, val in zip(exprs, ret):
-                stash[u"«getString» " + key] = val
+                stash[u"«get_string» " + key] = val
         return ret
 
     def IN(self, port, stash=None):
@@ -289,7 +289,7 @@ class Galil(ExternalGalil.Galil):
 
         Examples:
 
-            self.galil.run( "press", xPressP=3, xPressD="mcPrssNO" )
+            self.galil.run( "press", xPressP=3, xPressD=C_FLAG_NO_CHANGE_PRESSURE )
             self.galil.run( "fhome" )
 
         @attention: Settign string values via kwargs will rewuire wrapping
@@ -326,7 +326,7 @@ class Galil(ExternalGalil.Galil):
         and returns None.
         """
         try:
-            return self.getString("xPrgName")
+            return self.get_string("xPrgName")
         except ExternalGalil.CommandError:
             return None
 
