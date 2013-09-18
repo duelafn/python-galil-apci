@@ -11,7 +11,7 @@ the APCI toolchain.
 from __future__ import division, absolute_import, print_function
 
 
-import os, re, md5
+import os, re, hashlib
 import Galil as ExternalGalil
 from binascii import b2a_hex
 
@@ -100,7 +100,7 @@ class Galil(ExternalGalil.Galil):
         """
         Computes a hash of the program. Returns a Galil string.
         """
-        m = md5.new()
+        m = hashlib.md5()
         m.update(program)
         return self.string_to_galil_hex(m.hexdigest()[0:6])
 
