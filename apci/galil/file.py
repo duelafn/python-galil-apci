@@ -99,10 +99,6 @@ def asin(h):
     """asin function returning degrees"""
     return 180 * math.asin(h) / math.pi
 
-def mm2thou(val):
-    """conversion from mm to thousandths of an inch"""
-    return val / .0254
-
 
 class GalilFile(object):
 
@@ -123,7 +119,6 @@ class GalilFile(object):
         g["max"] = max
         g["min"] = min
         g["int"] = int
-        g["mm2thou"] = mm2thou
 
         g["sin"]  = sin
         g["asin"] = asin
@@ -192,7 +187,7 @@ class GalilFile(object):
         pc_MG       = re.compile(r"^MG")
         subs        = set()
         sub_line    = {}
-        sub_arity   = { "#ok": 4, "#error": 4 }
+        sub_arity   = {}
         sub_neg1_dflt = set(("#ok", "#error"))
         AUTO_subs   = set(["#AUTO", "#MCTIME", "#AMPERR", "#AUTOERR", "#CMDERR"])
         JSP_sub     = set()
