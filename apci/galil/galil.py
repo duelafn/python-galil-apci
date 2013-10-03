@@ -13,7 +13,9 @@ from __future__ import division, absolute_import, print_function
 
 import os, re, hashlib
 import Galil as ExternalGalil
+import gzip as _gzip
 from binascii import b2a_hex
+from contextlib import closing
 
 from apci.util import flatten, short_stacktrace
 
@@ -368,3 +370,18 @@ class Galil(ExternalGalil.Galil):
                 return self.ensureBoardProgram(name, program, run_auto, force=True)
 
         return False
+
+    def saveBoardProgram(self, fname, gzip=False):
+        """
+        Saves the Examines the hash of the current program on the galil board. If it
+        matches the hash of the parameter, nothing is done. Otherwise, the
+        program will be loaded onto the board and its #AUTO routine will be
+        executed (unless "run_auto=False" is passed to this method).
+
+        Returns True if program was freshly downloaded to the board.
+        Returns False if the prorgam was already there.
+        """
+
+        fh = _gzip.open(fname, 'wb') if gzip else open(fname, 'wb')
+        with closing(fh):
+            fh.write(self.programUpload())
