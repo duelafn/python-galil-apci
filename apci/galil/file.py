@@ -385,7 +385,7 @@ class GalilFile(object):
 
         if isinstance(context, Machine):
             ctx['m'] = context
-            ctx.update( context.settings )
+            ctx.update( context.galil_settings )
         else:
             ctx.update( context )
 
