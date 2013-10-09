@@ -5,8 +5,8 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 from os.path import split, join, dirname, abspath, isfile, isdir, basename
-sys.path.append("pylib")
-sys.path.append(join(dirname(dirname(abspath(__file__))), "pylib"))
+sys.path.insert(1, "pylib")
+sys.path.insert(1, join(dirname(dirname(abspath(__file__))), "pylib"))
 
 import re
 
