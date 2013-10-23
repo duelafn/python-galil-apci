@@ -11,11 +11,16 @@ the APCI toolchain.
 from __future__ import division, absolute_import, print_function
 
 
-import os, re, hashlib
-import Galil as ExternalGalil
+import os, re, hashlib, platform
 import gzip as _gzip
 from binascii import b2a_hex
 from contextlib import closing
+
+if 'Windows' == platform.system():
+    class ExternalGalil(object):
+        Galil = object
+else:
+    import Galil as ExternalGalil
 
 from apci.util import flatten, short_stacktrace
 
