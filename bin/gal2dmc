@@ -33,7 +33,7 @@ perform minification to help stay within line limits.
 )
 
     parser.add_argument('--output', '-o', help='output file or directory for compiled files (default STDOUT)')
-    parser.add_argument('--vars', '-v', help='JSON file containing variable values to use in template')
+    parser.add_argument('--vars', '-v', help='machine definition file')
     parser.add_argument('--minify', '-m', action='store_true', help='enable minification')
     parser.add_argument('--no-trim', '-t', action='store_true', help='show (do not trim) whitespace')
     parser.add_argument('--default', action='store_true', help='load default config without raising warning')
