@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-
-"""
+"""Core galil package"""
 # Author: Dean Serenevy  <deans@apcisystems.com>
 # This software is Copyright (c) 2013 APCI, LLC. All rights reserved.
 from __future__ import division, absolute_import, print_function
