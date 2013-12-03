@@ -11,7 +11,7 @@ the APCI toolchain.
 from __future__ import division, absolute_import, print_function
 
 
-import os, re, hashlib, platform
+import os, re, hashlib, platform, time
 import gzip as _gzip
 from binascii import b2a_hex
 from contextlib import closing
@@ -337,6 +337,56 @@ class Galil(ExternalGalil.Galil):
         except ExternalGalil.CommandError:
             return None
 
+    def add_xAPI(self, program, name, hash):
+        """
+        Returns a modified program with required xAPI support functions.
+
+        Appends #xINIT and #xAPIOk functions to the program which are used
+        #by the check_xAPI() method to determine whether the controller
+        program was loaded by this module.
+        """
+        return program +
+            """#xINIT;xPrgName={};xPrgHash={};xAPIOk=0;EN\n""".format(name, hash) +
+            """#xAPIOk;xAPIOk=1+xAPIOk;EN\n"""
+
+    def check_xAPI(self):
+        """
+        Check that loaded controller code properly supports xAPI
+        (thus xPrgName and xPrgHash are reliable)
+        """
+        try:
+            xAPIOk = self["xAPIOk"]
+
+            if self["_XQ0"] < 0:
+                self.command('XQ#xAPIOk')
+                time.sleep(0.020)
+            else:
+                self.run("xAPI")
+                time.sleep(0.100)
+
+            return (self["xAPIOk"] == xAPIOk + 1)
+
+        except ExternalGalil.CommandError:
+            return False
+
+    def boardProgramNeedsUpdate(self, name, check):
+        """
+        Returns True if program needs to be loaded onto controller.
+        Returns False if the prorgam is already installed there.
+        """
+        if "\n" in check:
+            program_str = str(check)
+            new_hash = self.computeProgramHash(program_str)
+        else:
+            new_hash = check
+
+        return (
+            not self.check_xAPI()
+            or  not self.get("xPrgOK")
+            or  self.getBoardProgramName() != name
+            or  self.getBoardProgramHash() != new_hash
+        )
+
     def ensureBoardProgram(self, name, program, run_auto=True, force=False):
         """
         Examines the hash of the current program on the galil board. If it
@@ -350,19 +400,17 @@ class Galil(ExternalGalil.Galil):
         program_str = str(program)
         new_hash    = self.computeProgramHash(program_str)
 
-        if ( force
-             or  not self.get("xPrgOK")
-             or  self.getBoardProgramName() != name
-             or  self.getBoardProgramHash() != new_hash
-           ):
+        if force or self.boardProgramNeedsUpdate(name, new_hash):
             logger.info("Downloading program %s (%s)", name, new_hash)
             self["xPrgOK"] = 0
-            self.programDownload(program_str)
-            self['xPrgName'] = self.string_to_galil_hex(name)
-            self['xPrgHash'] = new_hash
+            self.programDownload(self.add_xAPI(program_str, name, new_hash))
             if run_auto:
                 logger.info("Starting program %s (%s)", name, new_hash)
                 self.command('XQ#AUTO')
+            else:
+                # Ensure name/hash are correct even if we don't run #AUTO
+                self['xPrgName'] = self.string_to_galil_hex(name)
+                self['xPrgHash'] = new_hash
             self["xPrgOK"] = 1
             return True
 
@@ -378,13 +426,7 @@ class Galil(ExternalGalil.Galil):
 
     def saveBoardProgram(self, fname, gzip=False):
         """
-        Saves the Examines the hash of the current program on the galil board. If it
-        matches the hash of the parameter, nothing is done. Otherwise, the
-        program will be loaded onto the board and its #AUTO routine will be
-        executed (unless "run_auto=False" is passed to this method).
-
-        Returns True if program was freshly downloaded to the board.
-        Returns False if the prorgam was already there.
+        Saves the current program to a compressed file.
         """
 
         fh = _gzip.open(fname, 'wb') if gzip else open(fname, 'wb')
