@@ -341,13 +341,21 @@ class Galil(ExternalGalil.Galil):
         """
         Returns a modified program with required xAPI support functions.
 
-        Appends #xINIT and #xAPIOk functions to the program which are used
-        #by the check_xAPI() method to determine whether the controller
-        program was loaded by this module.
+        Replaces any empty #xINIT and #xAPIOk functions in the program with
+        correct implementations which set the program name/hash and which
+        implement the xAPI verification.
+
+        This action WILL change the length of the lines defining these
+        functions so the functions definitions should be the only thing on
+        the line. (shouldn't be a problem since any otimizer will leave the
+        #XXXX at the beginning of a line). This action, however, will not
+        alter the function count or line count of the program.
         """
-        return program +
-            """#xINIT;xPrgName={};xPrgHash={};xAPIOk=0;EN\n""".format(name, hash) +
-            """#xAPIOk;xAPIOk=1+xAPIOk;EN\n"""
+        return program.replace(
+            "#xINIT;EN", "#xINIT;xPrgName={};xPrgHash={};xAPIOk=0;EN".format(name, hash)
+        ).replace(
+            "#xAPIOk;EN", "#xAPIOk;xAPIOk=1+xAPIOk;EN"
+        )
 
     def check_xAPI(self):
         """
