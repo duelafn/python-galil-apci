@@ -341,9 +341,9 @@ class Galil(ExternalGalil.Galil):
         """
         Returns a modified program with required xAPI support functions.
 
-        Replaces any empty #xINIT and #xAPIOk functions in the program with
-        correct implementations which set the program name/hash and which
-        implement the xAPI verification.
+        Replaces any empty #xINIT and #xAPIOk functions (must be only thing
+        on line) in the program with correct implementations which set the
+        program name/hash and which implement the xAPI verification.
 
         This action WILL change the length of the lines defining these
         functions so the functions definitions should be the only thing on
@@ -352,9 +352,9 @@ class Galil(ExternalGalil.Galil):
         alter the function count or line count of the program.
         """
         return program.replace(
-            "#xINIT;EN", "#xINIT;xPrgName={};xPrgHash={};xAPIOk=0;EN".format(name, hash)
+            "#xINIT;EN\n", '#xINIT;xPrgName="{}";xPrgHash={};xAPIOk=0;EN\n'.format(name, hash)
         ).replace(
-            "#xAPIOk;EN", "#xAPIOk;xAPIOk=1+xAPIOk;EN"
+            "#xAPIOk;EN\n", '#xAPIOk;xAPIOk=xAPIOk+1;EN\n'
         )
 
     def check_xAPI(self):
