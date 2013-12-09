@@ -421,6 +421,7 @@ class Galil(ExternalGalil.Galil):
 
         if force or self.boardProgramNeedsUpdate(name, new_hash):
             logger.info("Downloading program %s (%s)", name, new_hash)
+            self.command('RS')
             self["xPrgOK"] = 0
             self.programDownload(self.add_xAPI(program_str, name, new_hash))
             if run_auto:
