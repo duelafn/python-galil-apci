@@ -199,19 +199,19 @@ class Galil(ExternalGalil.Galil):
 
     def IN(self, port, stash=None):
         """
-        Reads a galil @IN[] value. Returns 0 or 1.
+        Reads a galil @IN[] value. Returns 0, 1, or None on error.
         """
         return self.get("@IN[{}]".format(int(port)), None, stash)
 
     def AN(self, port, stash=None):
         """
-        Reads a galil @AN[] value. Returns a float.
+        Reads a galil @AN[] value. Returns a float, or None on error.
         """
         return self.get("@AN[{}]".format(int(port)), None, stash)
 
     def OUT(self, port, stash=None):
         """
-        Reads a galil @OUT[] value. Returns 0 or 1.
+        Reads a galil @OUT[] value. Returns 0, 1, or None on error.
         """
         return self.get("@OUT[{}]".format(int(port)), None, stash)
 
