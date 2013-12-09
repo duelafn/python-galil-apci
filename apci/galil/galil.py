@@ -388,12 +388,23 @@ class Galil(ExternalGalil.Galil):
         else:
             new_hash = check
 
-        return (
-            not self.check_xAPI()
-            or  not self.get("xPrgOK")
-            or  self.getBoardProgramName() != name
-            or  self.getBoardProgramHash() != new_hash
-        )
+        if not self.check_xAPI():
+            logger.debug("xAPI check failed, controller reload required")
+            return True
+
+        if not self.get("xPrgOK"):
+            logger.debug("Not xPrgOK, controller reload required")
+            return True
+
+        if self.getBoardProgramName() != name:
+            logger.debug("Wrong program running ({} != {}), controller reload required".format(self.getBoardProgramName(), name))
+            return True
+
+        if self.getBoardProgramHash() != new_hash:
+            logger.debug("Wrong program version running ({} != {}), controller reload required".format(self.getBoardProgramHash(), new_hash))
+            return True
+
+        return False
 
     def ensureBoardProgram(self, name, program, run_auto=True, force=False):
         """
