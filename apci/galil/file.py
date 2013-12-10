@@ -183,7 +183,9 @@ class GalilFile(object):
         p_sub_arg   = re.compile(r"(?:^|;)(?:J[SP]|XQ)(#[a-zA-Z0-9_]{1,7})((?:\(.*?\))?)(?:;|$|,\(|,(?:\d+|\^[a-h]|\w{1,8})(?:;|$))")
         p_bad_ops   = re.compile(r"(?:==|!=)")
         p_JS        = re.compile(r"_JS")
-        p_paren_arg = re.compile(r".(?:\(|\)).")
+        # Dangerous to have any calculation in an argument. Only want variables.
+        # warning: won't catch @ABS[foo]
+        p_danger_arg = re.compile(r"(?:.(?:\(|\)).|[^a-zA-Z0-9.,@\[\]_\(\)\^\&\"\-]|(?<![\(,])\-)")
         pc_MG       = re.compile(r"^MG")
         subs        = set()
         sub_line    = {}
@@ -232,8 +234,8 @@ class GalilFile(object):
 
                 if p_JS.search(arg):
                     errors.append( "line {}, _JS used in subroutine argument: {}".format(lineno, line) )
-                if p_paren_arg.search(arg):
-                    errors.append( "line {}, paren grouping used in argument: {}".format(lineno, line) )
+                if p_danger_arg.search(arg):
+                    errors.append( "line {}, Dangerous value (calculation) used in argument: {}".format(lineno, line) )
 
             for cmd in line.split(";"):
                 # long strings
