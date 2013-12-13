@@ -395,15 +395,12 @@ class GalilFile(object):
           - A, B  - the axis labels for the primary and secondary motors
           - apci.constants constants
         """
-        ctx = {
-            "A": context["primary"]["axis"],
-            "B": context["secondary"]["axis"],
-        }
+        ctx = dict()
         ctx.update( C )
 
         if isinstance(context, Machine):
             ctx['m'] = context
-            ctx.update( context.galil_settings )
+            ctx.update( context.galil_settings() )
         else:
             ctx.update( context )
 
