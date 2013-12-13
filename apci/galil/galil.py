@@ -427,6 +427,7 @@ class Galil(ExternalGalil.Galil):
             if run_auto:
                 logger.info("Starting program %s (%s)", name, new_hash)
                 self.command('XQ#AUTO')
+                time.sleep(0.5)
             else:
                 # Ensure name/hash are correct even if we don't run #AUTO
                 self['xPrgName'] = self.string_to_galil_hex(name)
@@ -438,6 +439,7 @@ class Galil(ExternalGalil.Galil):
             logger.info("Restarting program %s (%s)", name, new_hash)
             try:
                 self.command('XQ#AUTO')
+                time.sleep(0.5)
             except:
                 self["xPrgOK"] = 0
                 return self.ensureBoardProgram(name, program, run_auto, force=True)
