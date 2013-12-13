@@ -178,9 +178,18 @@ class GalilFile(object):
         content = self.minify(content)
         errors = []
 
+        # WARNING: Any trailing semicolon/EOL checks need to be zero-width assertions
         p_long_name = re.compile(r"(?:^|;)[A-Z]{2}([a-zA-Z0-9_]{8})|((?:[a-z][a-zA-Z0-9_]{7}|#[a-zA-Z0-9_]{7})[a-zA-Z0-9_]+)")
         p_sub_def   = re.compile(r"(?:^|;)(#[a-zA-Z0-9_]{1,7})")
-        p_sub_arg   = re.compile(r"(?:^|;)(?:J[SP]|XQ)(#[a-zA-Z0-9_]{1,7})((?:\(.*?\))?)(?:;|$|,\(|,(?:\d+|\^[a-h]|\w{1,8})(?:;|$))")
+        p_sub_arg   = re.compile(r"""
+                         (?:^|;)
+                         (?:J[SP]|XQ) (\#[a-zA-Z0-9_]{1,7})      # jump name
+                         ((?:\(.*?\))?)                          # optional arguments
+                         (?= ; | $                               # endl
+                           | , \(                                # complex condition
+                           | , (?:\d+|\^[a-h]|\w{1,8}) (?:;|$)   # thread number
+                         )
+                      """, re.X)
         p_bad_ops   = re.compile(r"(?:==|!=)")
         p_JS        = re.compile(r"_JS")
         # Dangerous to have any calculation in an argument. Only want variables.
