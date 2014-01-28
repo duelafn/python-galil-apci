@@ -192,6 +192,9 @@ class GalilFile(object):
                       """, re.X)
         p_bad_ops   = re.compile(r"(?:==|!=)")
         p_JS        = re.compile(r"_JS")
+
+        p_if_js     = re.compile(r"(?:^|;)IF\([^;\n]+\)[;\n](J[SP]#[a-zA-Z]+)[^;\n]*[;\n]ENDIF", re.M)
+
         # Dangerous to have any calculation in an argument. Only want variables.
         # warning: won't catch @ABS[foo]
         p_danger_arg = re.compile(r"(?:.(?:\(|\)).|[^a-zA-Z0-9.,@\[\]_\(\)\^\&\"\-]|(?<![\(,])\-)")
@@ -203,6 +206,10 @@ class GalilFile(object):
         AUTO_subs   = set(["#AUTO", "#MCTIME", "#AMPERR", "#AUTOERR", "#CMDERR"])
         JSP_sub     = set()
         JSP_line    = collections.defaultdict(list)
+
+        if warnings:
+            for jump in p_if_js.findall(content):
+                errors.append( "IF(...);{} better written as {},(...)".format(jump, jump) )
 
         lineno = 0
         for line in content.split("\n"):
