@@ -287,6 +287,34 @@ class Galil(ExternalGalil.Galil):
                 code.append(s)
         return code
 
+    def _get_variables_code(self, **kwargs):
+        """Internal helper function for .set() and .run()"""
+        code = []
+        for name, val in kwargs.iteritems():
+            if isinstance(val, basestring):
+                code.append('{}="{}"'.format(name, val))
+            else:
+                code.append('{}={}'.format(name, val))
+
+        return code
+
+    def set(self, **kwargs):
+        """
+        Set one or more variables at once.
+
+        Example:
+
+            self.galil.set( xPressP=3, xPressD=C_FLAG_NO_CHANGE_PRESSURE )
+
+        @attention: Strings will be automatically wrapped in "", be sure
+            that any numbers passed are properly int() or float().
+        """
+        code = self._get_variables_code(**kwargs)
+        if GALIL_TRACE: logger.info("Setting variables: %s", " ".join(code))
+
+        for line in self.join(code):
+            self.command(line)
+
     def run(self, command, **kwargs):
         """
         Run an APCI "program" on the galil board.
@@ -299,13 +327,10 @@ class Galil(ExternalGalil.Galil):
             self.galil.run( "press", xPressP=3, xPressD=C_FLAG_NO_CHANGE_PRESSURE )
             self.galil.run( "fhome" )
 
-        @attention: Settign string values via kwargs will rewuire wrapping
+        @attention: Setting string values via kwargs will rewuire wrapping
         the value in quotes (e.g., C{xName='"Foo"'})
         """
-        code = []
-        for name, val in kwargs.iteritems():
-            code.append("{}={}".format(name, val))
-
+        code = self._get_variables_code(**kwargs)
         if GALIL_TRACE: logger.info("Running galil program '%s' with arguments: %s", command, " ".join(code))
 
         # Be sure to set this last!
