@@ -203,7 +203,7 @@ class GalilFile(object):
         sub_line    = {}
         sub_arity   = {}
         sub_neg1_dflt = set(("#ok", "#error"))
-        AUTO_subs   = set(["#AUTO", "#MCTIME", "#AMPERR", "#AUTOERR", "#CMDERR"])
+        AUTO_subs   = set(["#AUTO", "#MCTIME", "#AMPERR", "#AUTOERR", "#POSERR", "#CMDERR"])
         JSP_sub     = set()
         JSP_line    = collections.defaultdict(list)
 
