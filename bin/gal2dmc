@@ -6,7 +6,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from os.path import split, join, dirname, abspath, isfile, isdir, basename
+from os.path import split, join, dirname, abspath, isfile, isdir, basename, exists
 sys.path.insert(1, "pylib")
 sys.path.insert(1, join(dirname(dirname(abspath(__file__))), "pylib"))
 
@@ -19,6 +19,7 @@ logger = logging.getLogger('apci.gal2dmc')
 
 from apci.galil.file import GalilFile
 from apci.lfw.machine import Machine
+from apci.paths import user_conf
 
 
 import argparse
@@ -34,8 +35,10 @@ perform minification to help stay within line limits.
 """
 )
 
+    default_vars = user_conf("lfw/machine.json") if exists(user_conf("lfw/machine.json")) else None
+
     parser.add_argument('--output', '-o', help='output file or directory for compiled files (default STDOUT)')
-    parser.add_argument('--vars', '-v', help='machine definition file')
+    parser.add_argument('--vars', '-v', help='machine definition file', default=default_vars)
     parser.add_argument('--minify', '-m', action='store_true', help='enable minification')
     parser.add_argument('--no-trim', '-t', action='store_true', help='show (do not trim) whitespace')
     parser.add_argument('--default', action='store_true', help='load default config without raising warning')
