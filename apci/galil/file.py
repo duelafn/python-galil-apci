@@ -285,6 +285,10 @@ class GalilFile(object):
         line_end_semi = re.compile(r';$')
 
         # Comments: ', NO, REM. Do NOT need to check for word boundaries ("NOTE" is a comment)
+        #
+        ## WARNING: This is INCORRECT! In galil a semicolon ends a comment
+        ## - this is crazy so I explicitly choose to have a comment kill
+        ## the rest of the line
         comment = re.compile(r"(?:^|;)\s*(?:'|NO|REM).*")
 
         # Operators with wrapped space. Match will be replaced with \1.
@@ -327,13 +331,12 @@ class GalilFile(object):
         while i < len(_lines1):
             line = _lines1[i]
 
-            if joinable_line.match(line):
-                while ( i < len(_lines1) - 1
-                        and joinable_line.match(_lines1[i+1])
-                        and self.line_length > len(line + ";" + _lines1[i+1])
-                        ):
-                    line = line + ";" + _lines1[i+1]
-                    i += 1
+            while ( i < len(_lines1) - 1
+                    and joinable_line.match(_lines1[i+1])
+                    and self.line_length > len(line + ";" + _lines1[i+1])
+                    ):
+                line = line + ";" + _lines1[i+1]
+                i += 1
 
             if len(line):
                 _lines2.append(line)
@@ -373,8 +376,7 @@ class GalilFile(object):
                 logger.error("Long line '%s' in minified galil output", line)
 
         return "\n".join(lines)
-        # Note: if we get more match conditions, see:
-        #    http://stackoverflow.com/questions/1663995/python-variable-assignment-and-if-statement#answer-1806338
+
 
     def trim(self, content):
         """
