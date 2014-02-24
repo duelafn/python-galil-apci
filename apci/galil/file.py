@@ -143,11 +143,19 @@ class GalilFile(object):
 
         loaders.append(jinja2.PackageLoader('apci', 'gal', encoding='utf-8'))
 
+        def finalize(value):
+            if value is None:
+                print("Use of undefined value in template!")
+                return "None"
+            else:
+                return value
+
         self.env = jinja2.Environment(
             extensions=[RequireExtension, RaiseExtension],
             loader=jinja2.ChoiceLoader(loaders),
-            undefined=jinja2.StrictUndefined
-            )
+            undefined=jinja2.StrictUndefined,
+            finalize=finalize,
+        )
 
         GalilFile.add_globals(self.env.globals)
 
