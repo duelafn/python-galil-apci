@@ -111,6 +111,16 @@ class Galil(ExternalGalil.Galil):
         m.update(program)
         return self.string_to_galil_hex(m.hexdigest()[0:6])
 
+    @classmethod
+    def round(self, val):
+        """
+        Rounds a value to galiul precision. If the value then is an
+        integral value, will return a python int so that its
+        stringification is correct.
+        """
+        val = round(float(val), 4)
+        return int(val) if val == int(val) else val
+
     def get(self, key, dflt=None, stash=None):
         """
         Get the result from a single galil command.
