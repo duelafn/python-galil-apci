@@ -112,6 +112,7 @@ class GalilFile(object):
         g["string_to_galil_hex"] = apci.galil.Galil.string_to_galil_hex
         g["galil_hex_to_string"] = apci.galil.Galil.galil_hex_to_string
         g["galil_hex_to_binary"] = apci.galil.Galil.galil_hex_to_binary
+        g["round_galil"] = apci.galil.Galil.round
 
         g["param_list"] = param_list
         g["HX"] = build_commander("HX{}")
