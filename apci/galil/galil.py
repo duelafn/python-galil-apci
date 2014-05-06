@@ -55,7 +55,7 @@ class Galil(ExternalGalil.Galil):
 
     def command(self,command,retry=1):
         try:
-            return super(Galil,self).command(command)
+            return super(Galil,self).command(str(command))
         except ExternalGalil.TimeoutError:
             if retry > 0:
                 return self.command(command,retry-1)
