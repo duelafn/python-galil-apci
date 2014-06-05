@@ -175,6 +175,7 @@ class GalilFile(object):
             - duplicate labels / forgotten C{JS}, C{JS} or C{JP} to non-existant labels
             - C{_JS} or C{()} used in sub argument, inconsistent sub arity
             - Double equals ("=="), Not equals ("!=")
+            - presence of "None" anywhere in the code
 
             - [warning] unused labels
 
@@ -225,6 +226,10 @@ class GalilFile(object):
         lineno = 0
         for line in content.split("\n"):
             lineno += 1
+
+            # presence of None
+            if "None" in line:
+                errors.append( "line {}, Contains 'None', check template vars: {}".format(lineno, line) )
 
             # long lines
             if len(line) > self.line_length:
