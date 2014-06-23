@@ -9,18 +9,23 @@ __all__ = '''
 Parameter
 CmdParameter OutputBitParameter
 BasicParameter BasicQueryParameter EqParameter
-AxisParameter AxisMaskParameter
+SSIParameter
+AxisParameter AxisQueryParameter AxisMaskParameter
 IndexedParameter VectorParameter NetworkParameter
 '''.split()
 
 import struct
 
+from .galil import Galil
 
 class Parameter(object):
-    def __init__(self, galil, name, value=None, axes=None):
+    def __init__(self, galil, name, value=None, axes=None, filename=None, lineno=None):
         self.galil = galil
         self.name  = name
         self.value = value
+        self.axes  = axes
+        self.filename = filename
+        self.lineno   = lineno
 
     def __str__(self):
         if self.value is not None:
@@ -31,14 +36,16 @@ class Parameter(object):
     def check(self, value=None):
         value = self.value if value is None else value
         curr_value = self.get(refresh=False)
+        return self.cmp(curr_value, value)
 
+    def cmp(self, curr_value, value):
         # String equality is great!
         if str(value) == str(curr_value):
             return True
 
         # Else, try to interpret as numbers
         try:
-            return apci.galil.Galil.round(value) == apci.galil.Galil.round(curr_value)
+            return Galil.round(value) == Galil.round(curr_value)
         except ValueError:
             return False
 
@@ -94,9 +101,27 @@ class AxisParameter(EqParameter):
         super(AxisParameter,self).__init__(galil, name, cmd=(name + axis), **kwargs)
 
 
+class AxisQueryParameter(AxisParameter):
+    def get_cmd(self):
+        return "{}=?".format(self.cmd)
+
+
+class SSIParameter(AxisQueryParameter):
+    def get(self, refresh=True):
+        try:
+            value = self.galil.command(self.get_cmd())
+            value = [ x.strip() for x in value.split(',') ]
+            value = "{},{},{},{}<{}>{}".format(*value)
+        except ExternalGalil.CommandError:
+            value = 0
+        if refresh:
+            self.value = value
+        return value
+
+
 class AxisMaskParameter(BasicParameter):
     def __init__(self, galil, name, axes, **kwargs):
-        super(AxisMaskParameter,self).__init__(galil, name, **kwargs)
+        super(AxisMaskParameter,self).__init__(galil, name, axes=axes, **kwargs)
 
     def get(self, refresh=True):
         axes = [ a for a in self.axes if self.galil.commandValue(self.get_cmd(a)) ]
@@ -106,10 +131,10 @@ class AxisMaskParameter(BasicParameter):
         return axes
 
     def get_cmd(self, axis):
-        return "MG_" + self.cmd + axis
+        return "MG_" + self.cmd + str(axis)
 
     def join(self, items):
-        return "".join(items) if items else "N"
+        return "".join(str(x) for x in items) if items else "N"
 
 
 class VectorParameter(AxisMaskParameter):
@@ -117,14 +142,34 @@ class VectorParameter(AxisMaskParameter):
         kwargs['axes'] = range(length)
         super(VectorParameter,self).__init__(galil, name, **kwargs)
 
+    def get(self, refresh=True):
+        axes = [ self.galil.commandValue(self.get_cmd(a)) for a in self.axes ]
+        axes = self.join(axes)
+        if refresh:
+            self.value = axes
+        return axes
+
+    def cmp(self, curr_value, value):
+        curr_value = curr_value.split(',')
+        value = value.split(',')
+
+        if len(curr_value) != len(value):
+            return False
+
+        for i in xrange(len(value)):
+            if not super(VectorParameter,self).cmp(curr_value[i], value[i]):
+                return False
+
+        return True
+
     def join(self, items):
-        return ",".join(items)
+        return ",".join(str(x) for x in items)
 
 
 class NetworkParameter(BasicParameter):
     @staticmethod
     def int_to_csip(val):
-        ",".join([ str(x) for x in reversed(struct.unpack_from("BBBB", struct.pack("i", val))) ])
+        return ",".join([ str(x) for x in reversed(struct.unpack_from(b"BBBB", struct.pack(b"i", val))) ])
 
     def get(self, refresh=True):
         value = self.int_to_csip(self.galil.commandValue(self.get_cmd()))
@@ -132,7 +177,7 @@ class NetworkParameter(BasicParameter):
             self.value = value
         return value
 
-    def get_cmd(self, axis):
+    def get_cmd(self):
         return "MG_" + self.name + "0"
 
 
@@ -155,7 +200,7 @@ class OutputBitParameter(Parameter):
         self.index = index
 
     def get_cmd(self):
-        return "@OUT[{}]".format(self.index)
+        return "MG@OUT[{}]".format(self.index)
 
     def set_cmd(self, value):
         return ("SB{}" if int(float(value)) else "CB{}").format(self.index)

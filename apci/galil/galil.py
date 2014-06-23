@@ -46,7 +46,7 @@ class Galil(ExternalGalil.Galil):
 
     def commandValue(self,command,retry=1):
         try:
-            return super(Galil,self).commandValue(command)
+            return super(Galil,self).commandValue(str(command))
         except ExternalGalil.TimeoutError:
             logger.warning("Galil timeout (retrying...)" if retry > 0 else "Galil timeout (no retry)")
             if retry > 0:

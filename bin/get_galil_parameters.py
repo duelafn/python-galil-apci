@@ -5,7 +5,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 
 import sys
-sys.path.append("pylib")
+sys.path.insert(1, "pylib")
 __version__ = '0.0.1'
 
 from apci.galil import Galil, GalilConfig
@@ -38,6 +38,8 @@ def MAIN(argv):
     galil = Galil(argv.address)
     conf = GalilConfig(galil, axes=argv.axes)
     conf.load(argv.template)
+    for change in conf.check():
+        print(change)
     conf.refresh()
     conf.save(argv.output)
 

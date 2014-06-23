@@ -18,12 +18,13 @@ CONFIG_PARSERS = [
     (re.compile(r'^\s*#'), None),
     (re.compile(r'^\s*$'), None),
     (re.compile(r"^\s*(?:REM|NO|EN|')"), None),
-    (re.compile(r'^\s*(?P<name>[A-Z]{2})(?P<axis>[A-Z])=(?P<value>.*)$'), AxisParameter),
+    (re.compile(r'^\s*(?P<name>SI)(?P<axis>[A-Z])=(?P<value>.*)$'), SSIParameter),
+    (re.compile(r'^\s*(?P<name>[A-Z]{2})(?P<axis>[A-Z])=(?P<value>.*)$'), AxisQueryParameter),
     (re.compile(r'^\s*(?P<name>[A-Z]{2})=(?P<value>.*)$'), EqParameter),
     (re.compile(r'^\s*(?P<name>[A-Z]{2})$'), CmdParameter),
     (re.compile(r'^\s*(?P<name>(?:SH)(?:[A-Z]))$'), CmdParameter),
-    (re.compile(r'^\s*(?P<name>RC|VF|PF|LZ|CO|LB|LU)\s+(?P<value>.*)$'), BasicParameter),
-    (re.compile(r'^\s*(?P<name>DH|IK|TM|MW|EI)\s+(?P<value>.*)$'), BasicQueryParameter),
+    (re.compile(r'^\s*(?P<name>LZ|CO|LB|LU)\s+(?P<value>.*)$'), BasicParameter),
+    (re.compile(r'^\s*(?P<name>RC|DH|VF|PF|IK|TM|MW|EI)\s+(?P<value>.*)$'), BasicQueryParameter),
     (re.compile(r'^\s*(?P<name>[CS]B)\s*(?P<index>\d+)$'), OutputBitParameter),
     (re.compile(r'^\s*(?P<name>CW)\s+(?P<value>[\d.]+)$'), BasicParameter),
     (re.compile(r'^\s*(?P<name>AQ)\s*(?P<index>\d+),(?P<value>.*)$'), IndexedParameter),
@@ -55,6 +56,18 @@ class GalilConfig(object):
             if isinstance(item, Parameter):
                 item.get(refresh=True)
 
+    def check(self):
+        changes = []
+        for item in self.lines:
+            if isinstance(item, Parameter):
+                if not item.check():
+                    changes.append("{} command on {} line {} changed from {} to {}".format(
+                            item.cmd,
+                            item.filename or 'Unknown', item.lineno or 'Unknown',
+                            item.value, item.get(refresh=False)
+                    ))
+        return changes
+
     def load(self, filename):
         with open(filename, 'r') as fh:
             lines = []
@@ -70,6 +83,8 @@ class GalilConfig(object):
                         elif callable(cls):
                             kwargs = match.groupdict()
                             kwargs.setdefault("axes", self.axes)
+                            kwargs.setdefault("filename", filename)
+                            kwargs.setdefault("lineno", lineno)
                             lines.append(cls(galil=self.galil, **kwargs))
                             break
                         else:
