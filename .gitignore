@@ -1,0 +1,39 @@
+## Roughly ordered by decreasing risk
+/_Galil.cpp
+/Galil.py
+/_*
+
+# See: https://github.com/github/gitignore
+# Compiled Ignores
+*.a
+*.app
+*.dll
+*.dylib
+*.exe
+*.la
+*.lai
+*.lib
+*.lo
+*.o
+*.slo
+*.so
+*.so.*
+
+# Python Ignores
+/pydoc
+/MANIFEST
+*.py[cod]
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+sdist
+develop-eggs
+.installed.cfg
+__pycache__
+pip-log.txt
+.coverage
+.tox
+nosetests.xml

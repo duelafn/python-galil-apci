@@ -1,0 +1,15 @@
+Source: galil-apci
+Maintainer: Dean Serneevy <deans@apcisystems.com>
+Section: python
+Priority: optional
+Build-Depends: python2.7-dev, debhelper (>= 7.4.3), swig
+Standards-Version: 3.9.1
+X-Python-Version: >= 2.7
+Homepage: https://github.com/duelafn/python-galil-apci
+
+Package: python-galil-apci
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-jinja2, galiltools
+Description: APCI Galil Wrapper
+ Builds a swig-generated Galil library for python. Also includes a wrapper
+ with various helpful tools.

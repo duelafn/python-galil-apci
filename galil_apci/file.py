@@ -8,28 +8,35 @@ Preforms useful actions on galil encoder files.
   - Whitespace trimming and minification by command packing
 """
 # Author: Dean Serenevy  <deans@apcisystems.com>
-# This software is Copyright (c) 2013 APCI, LLC. All rights reserved.
+# This software is Copyright (c) 2013 APCI, LLC.
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+# for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import division, absolute_import, print_function
 
 import re, sys
 import os.path
 import logging
+logger = logging.getLogger(__name__)
 
-import apci
-import apci.galil
-from apci import Machine, C
+import galil_apci
 import jinja2
 
 import collections
 
-from apci.jinja2.require import RequireExtension
-from apci.jinja2.error import RaiseExtension
+from jinja2_apci import RequireExtension, RaiseExtension
 
 import math
-from math import sqrt
-
-logger = logging.getLogger("apci.galil.file")
 
 
 axis2idx = { "A": 0, "B": 1, "C": 2, "D": 3,
@@ -50,7 +57,7 @@ def param_list(params):
 
         JG{{ param_list({ "A": 60*4096, "B": 60*4096 }) }}
         JG{{ param_list({ "0": 60*4096, "1": 60*4096 }) }}
-        JG{{ param_list({ primary.axis: "^a" ~ primary.counts, secondary.axis:  "^a" ~ secondary.counts }) }}
+        JG{{ param_list({ primary.axis: "^a*" ~ primary.counts, secondary.axis:  "^a*" ~ secondary.counts }) }}
     """
     a = [""] * 8
     for (k, v) in params.iteritems():
@@ -81,18 +88,6 @@ def build_commander(fmt):
     return cmd
 
 
-def ip_time(counts, *motors):
-    """
-    Compute the time (in ms) it will take the encoder to perform an IP
-    following the given motors' accel and decel curves. If multiple motors
-    are passed, returns the maximum time. See the developer documentation
-    (Mathematics / IP time section) for a derivation of this formula.
-    """
-    t = 0
-    for m in motors:
-        t = max(t, sqrt( 2 * counts * (m['accel'] + m['decel']) / (m['accel'] ** 2 + m['decel'] ** 2 - m['accel'] * m['decel']) ))
-    return 1000 * t
-
 def sin(theta):
     """sin function taking degree arguments"""
     return math.sin(math.pi * theta/180)
@@ -101,18 +96,23 @@ def asin(h):
     """asin function returning degrees"""
     return 180 * math.asin(h) / math.pi
 
+def cos(theta):
+    """cos function taking degree arguments"""
+    return math.cos(math.pi * theta/180)
+
+def acos(h):
+    """acos function returning degrees"""
+    return 180 * math.acos(h) / math.pi
+
 
 class GalilFile(object):
 
     @classmethod
     def add_globals(cls, g):
-        g["commit_id"] = apci.commit_id
-        g["commit_id_short"] = apci.commit_id_short
-
-        g["string_to_galil_hex"] = apci.galil.Galil.string_to_galil_hex
-        g["galil_hex_to_string"] = apci.galil.Galil.galil_hex_to_string
-        g["galil_hex_to_binary"] = apci.galil.Galil.galil_hex_to_binary
-        g["round_galil"] = apci.galil.Galil.round
+        g["string_to_galil_hex"] = galil_apci.Galil.string_to_galil_hex
+        g["galil_hex_to_string"] = galil_apci.Galil.galil_hex_to_string
+        g["galil_hex_to_binary"] = galil_apci.Galil.galil_hex_to_binary
+        g["round_galil"] = galil_apci.Galil.round
 
         g["param_list"] = param_list
         g["HX"] = build_commander("HX{}")
@@ -125,11 +125,11 @@ class GalilFile(object):
 
         g["sin"]  = sin
         g["asin"] = asin
+        g["cos"]  = cos
+        g["acos"] = acos
 
-        g["ip_time"] = ip_time
 
-
-    def __init__(self, path=None, line_length=79):
+    def __init__(self, path=None, package=None, line_length=79):
         """
         @param path: If a path (array of directories) is provided, it will
             be prepended to the template search path. The default path is
@@ -143,8 +143,8 @@ class GalilFile(object):
         loaders = []
         if path:
             loaders.append(jinja2.FileSystemLoader(path, encoding='utf-8'))
-
-        loaders.append(jinja2.PackageLoader('apci', 'gal', encoding='utf-8'))
+        if package:
+            loaders.append(jinja2.PackageLoader(package, 'gal', encoding='utf-8'))
 
         def finalize(value):
             if value is None:
@@ -406,32 +406,13 @@ class GalilFile(object):
         return "\n".join(lines)
 
 
-    def build_context(self, name, context):
-        """
-        Creates some convenience variables from the configuration. Created are:
-
-          - A, B  - the axis labels for the primary and secondary motors
-          - apci.constants constants
-        """
-        ctx = dict()
-        ctx.update( C )
-
-        if isinstance(context, Machine):
-            ctx['m'] = context
-            ctx.update( context.galil_settings() )
-        else:
-            ctx.update( context )
-
-        return ctx
-
     def render(self, name, context):
         """
         Renders a galil template file (substitutes variables and expands
         inclusions), but does not perform whitespace trimming or
         minification.
         """
-        ctx = self.build_context(name, context)
-        content = self.env.get_template(name).render(ctx)
+        content = self.env.get_template(name).render(context)
         # double semicolons confuse galil but are somewhat easy to
         # introduce when templating. Strip them out here:
         return re.sub(r';(\s*)(?=;)', r'\1', content).encode('utf-8')

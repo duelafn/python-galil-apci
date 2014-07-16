@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+for f in /usr/lib64/libGalil* /usr/lib64/libgalil*; do
+    fname=$(basename "$f")
+    if (test \! -e "/usr/lib/$fname"); then
+        ln -s "/usr/lib64/$fname" "/usr/lib/"
+    fi
+done
+
+if which pycompile >/dev/null 2>&1; then
+    pycompile -p python-galil-apci
+fi

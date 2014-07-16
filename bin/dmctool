@@ -1,41 +1,58 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Compile .gal files into .dmc for use on a Galil Controller
 #
 # Author: Dean Serenevy  <deans@apcisystems.com>
-# This software is Copyright (c) 2013 APCI, LLC. All rights reserved.
-from __future__ import division, absolute_import, print_function
+# This software is Copyright (c) 2013 APCI, LLC.
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+# for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import division, absolute_import, print_function, unicode_literals
+__version__ = '0.0.1'
 
-import sys
-from os.path import split, join, dirname, abspath, isfile, isdir, basename, exists
-sys.path.insert(1, "pylib")
-sys.path.insert(1, join(dirname(dirname(abspath(__file__))), "pylib"))
+import re, json, sys, os
+from os.path import split, join, dirname, isdir, basename, exists, abspath
+sys.path.insert(1, dirname(dirname(abspath(__file__))))
 
-import re
-
-import apci
 import logging
-apci.save_logs("gal2dmc")
-logger = logging.getLogger('apci.gal2dmc')
+logging.basicConfig()
+logger = logging.getLogger('dmctool')
 
-from apci.galil.file import GalilFile
-from apci.lfw.machine import Machine
-from apci.paths import user_conf
+from galil_apci.file import GalilFile
+
+
+def user_conf(*name):
+    confdir = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
+
+    if not os.path.exists(confdir):
+        os.makedirs(confdir)
+
+    return os.path.join(confdir, *name)
 
 
 import argparse
 def getopts():
     parser = argparse.ArgumentParser(description="""
-compile .gal file into a .dmc
+Generates files ready for use on a galil controller.
 
-Generates files ready for use in galiltools. The general convention used is
-that ".gal" files are template files which can use indenting and arbitrary
-comments. These ".gal" files should be compiled into ".dmc" files which
-will fill in template variables, remove offensive space and optionally
-perform minification to help stay within line limits.
+By convention, APCI uses the ".gal" extension for template files which use
+indenting and arbitrary comments. These ".gal" files should be compiled
+into ".dmc" files where template variables have been filled in, offensive
+space has been removed and perhaps had minification applied to help stay
+within line length and count limits.
 """
 )
 
-    default_vars = user_conf("lfw/machine.json") if exists(user_conf("lfw/machine.json")) else None
+    var_sources = [ path for path in [ "machine.json", user_conf("machine.json") ] if exists(path) ]
+    default_vars = var_sources[0] if var_sources else None
 
     parser.add_argument('--output', '-o', help='output file or directory for compiled files (default STDOUT)')
     parser.add_argument('--vars', '-v', help='machine definition file', default=default_vars)
@@ -55,16 +72,11 @@ def MAIN(argv):
 
         # Load Variables
         if argv.vars:
-            machine = Machine.load(argv.vars)
-        elif isfile("machine.json"):
-            machine = Machine.load("machine.json")
+            machine = json.load(open(argv.vars, 'rb'))
         else:
             if not argv.default:
-                logger.warning('Loading Default Machine Definition')
-            machine = Machine()
-
-        # Validate!
-        machine.validate()
+                logger.warning('Loading Empty Machine Definition')
+            machine = dict()
 
         # Process Templates
         if argv.minify:

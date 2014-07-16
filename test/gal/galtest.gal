@@ -1,0 +1,134 @@
+REM A test Galil file
+
+#setvals
+    REM UNKNOWN...
+    dir1= {{A}};  'Direction on out of phase on motor 1
+    dir2=-1.0; 'Direction on out of phase on motor 1
+
+
+    REM MACHINE CONSTANTS
+    ~a=0; ~b=1; 'Motor axis positions
+    ~c=4;       'LVDT axis position (Amplitude)
+    ~d=5;       'LVDT axis position (Tooling Position)
+    mode=1;     '0 for Independent, 1 for Gear
+
+    REM **WARNING** code probably does not make sense if c1 != c2
+    c1=4096;    'Counts per revolution on 1
+    c2=4096;    'Counts per revolution on 2
+    REM **WARNING** I am not confident unless p1 = p2 = 1
+    p1=1;       'Pulley to motor ratio on 1
+    p2=1;       'Pulley to motor ratio on 2
+
+    mxam=6.0;   'Maximum (theoretical) amplitude
+    mxfq=100;   'Maximum frequency
+
+
+    REM PARAMETERS
+    hmfrq  = 11;    'Frequency during homing
+    fifrq  = 5;     'Frequency during find index
+    cycles = 10;    'Cycles to read (collect)
+
+    atzero = 5;     'Tolerance for homing (off of c)
+
+    offi   = 0.0;   'Offset for motor 2 from motor 1 for zero amplitude when both index aligned
+    ishome = false; 'True if homed, more precisely, true if the offi variable is valid
+
+
+    REM CONSTANTS
+    true=1
+    false=0
+
+
+    REM PRIVATE VARIABLES
+    r1=0.0;         'Ratio of 1 move, determined by run mode
+    r2=0.0;         'Ratio of 2 move, determined by run mode
+    ofst1=0.0;      'Offset for motor 1
+    ofst2=0.0;      'Offset for motor 2
+
+    m1f=0; m2f=0;   'Motor move placeholders
+    enc1=0; enc2=0; 'Encoder move placeholders
+    tpc=0;          'Position of the 'c' axis placeholder
+
+    maxm=0; minm=0; 'Maximum and minimum placeholders
+    prd=10
+    st_time=TIME;   'Start Time (collect)
+    cu_time=TIME;   'Current Time (collect)
+
+    left=0;         'Left place holder (homing)
+    right=0;        'Right place holder (homing)
+EN
+
+#test2;; '(^a, &^b, &^c)
+    maxm=0;;        ' no wrap
+    prd=10
+
+    maxm=0;
+    prd=10
+EN
+
+#test3; '(^a, &^b, &^c)
+    IF ( ( (r1 + r2) <> 0 ) | ( ^a > 0 ) )
+        ^b = ^a * r1 / (r1+r2) * p1 * c1 / 360
+        ^c = ^a * r2 / (r1+r2) * p2 * c2 / 360
+    ELSE
+        ^b = 0
+        ^c = 0
+    ENDIF
+EN
+
+NO#! calcenc - Get encoder move position from input angle
+NO#!   ^a, Real, The angle
+NO#!   ^b, INT, (reference) The encoder counts on motor 1
+NO#!   ^c, INT, (reference) The encoder counts on motor 2
+NO#
+NO# Converts an angle to a number of counts for the two motors.
+NO#
+NO# In the simple case, this is just: 4096 * ^a/360, however, this function
+NO# will divide that amount between the two motors (if both r1 and r2 are
+NO# nonzero) and will also compensate for the pulley to motor ratio.
+NO#
+NO# r1 and/or r2 must be non-zero before calling this function.
+#calcenc; '(^a, &^b, &^c)
+    IF((r1+r2)<>0)
+        ^b=^a*r1/(r1+r2)*p1*c1/360
+        ^c=^a*r2/(r1+r2)*p2*c2/360
+    ELSE; ^b=0; ^c=0
+    ENDIF
+EN
+
+NO#! shift - Shifts each motor a given amount
+NO#!   ^a, INT, Motor 1 Shift Amount
+NO#!   ^b, INT, Motor 2 Shift Amount
+#shift
+    IF (^a<>0); IP~a=^a; ENDIF
+    IF (^b<>0); IP~b=^b; ENDIF
+EN
+
+NO#! rotate - Takes in an angle and rotates the motors to that angle
+NO#!   ^a, Real, Angle
+#rotate
+    JS#calcenc(^a, &m1f, &m2f)
+    m1f=m1f*dir1; m2f=m2f*dir2
+    enc1=@INT[ m1f - ofst1 ]; enc2=@INT[ m2f - ofst2 ]
+    ofst1=ofst1+enc1; ofst2=ofst2+enc2
+    JS#shift(enc1, enc2)
+EN
+
+NO#! mode - Sets the motor mode for the run
+#mode
+    IF(mode=0)
+        NOTE: Galil has funny comments!
+        r1=1.0; r2=4.0;
+    ELSE
+        IF(~a=0); GA~b=A; ENDIF
+        IF(~a=1); GA~b=B; ENDIF
+        IF(~a=2); GA~b=C; ENDIF
+        IF(~a=3); GA~b=D; ENDIF
+        IF(~a=4); GA~b=E; ENDIF
+        IF(~a=5); GA~b=F; ENDIF
+        IF(~a=6); GA~b=G; ENDIF
+        IF(~a=7); GA~b=H; ENDIF
+        GR~b=(p2/p1)
+        r1=0.0; r2=1.0;
+    ENDIF
+EN

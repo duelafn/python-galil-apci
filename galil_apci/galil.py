@@ -7,30 +7,47 @@ includes various helpful tools and also some integration into the rest of
 the APCI toolchain.
 """
 # Author: Dean Serenevy  <deans@apcisystems.com>
-# This software is Copyright (c) 2010,2013 APCI, LLC. All rights reserved.
+# This software is Copyright (c) 2010,2013 APCI, LLC.
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+# for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division, absolute_import, print_function
+__all__ = 'Galil'.split()
 
 
 import os, re, hashlib, platform, time
 import gzip as _gzip
+import collections
+
 from binascii import b2a_hex
 from contextlib import closing
-
-if 'Windows' == platform.system():
-    class ExternalGalil(object):
-        Galil = object
-else:
-    import Galil as ExternalGalil
-
-from apci.util import flatten, short_stacktrace
+import Galil as ExternalGalil
 
 import logging
-logger = logging.getLogger('apci.galil')
-GALIL_TRACE = int(os.environ.get('APCI_GALIL_TRACE', 0))
+logger = logging.getLogger('galil_apci')
+GALIL_TRACE = int(os.environ.get('GALIL_APCI_TRACE', 0))
 
 
-def _hex2str(match):
+def hex2str(match):
     return chr(int(match.group(0), 16))
+
+def flatten(l):
+    """Flattens iterables (but not strings). Returns an iterator."""
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el
 
 
 class Galil(ExternalGalil.Galil):
@@ -62,7 +79,6 @@ class Galil(ExternalGalil.Galil):
         return None
 
     def __getitem__(self, key):
-#         logger.debug("galil.__getitem__, getting '%s' for %s", key, short_stacktrace(1))
         if GALIL_TRACE: logger.debug("galil.__getitem__, getting '%s'", key)
         return self.commandValue("MG{}".format(key))
 
@@ -91,7 +107,7 @@ class Galil(ExternalGalil.Galil):
 
         E.g.: '$31323334.3500' -> '12345'
         """
-        return re.sub('[a-zA-Z0-9]{2}', _hex2str, ghex.translate(None, '$.')).rstrip("\0")
+        return re.sub('[a-zA-Z0-9]{2}', hex2str, ghex.translate(None, '$.')).rstrip("\0")
 
     @classmethod
     def galil_hex_to_binary(self, ghex):
@@ -100,7 +116,7 @@ class Galil(ExternalGalil.Galil):
 
         E.g.: '$31323334.3500' -> '12345\\x00'
         """
-        return re.sub('[a-zA-Z0-9]{2}', _hex2str, ghex.translate(None, '$.'))
+        return re.sub('[a-zA-Z0-9]{2}', hex2str, ghex.translate(None, '$.'))
 
     @classmethod
     def computeProgramHash(self, program):

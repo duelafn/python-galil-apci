@@ -1,0 +1,19 @@
+
+
+Packages Required
+-----------------
+
+* jinja2
+* Galil Tools (see below)
+
+
+
+Galil Tools
+-----------
+
+The galil-provided .deb files work fine. However, Debian's new multi-arch
+infrastructure does away with lib64/, so if you are using the 64-bit
+version, you will need to move or symlink the libraries into lib/:
+
+    pushd /usr/lib/
+    sudo ln -s ../lib64/libgalil.so* ../lib64/libGalil.so* ./
