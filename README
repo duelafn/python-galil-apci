@@ -17,3 +17,6 @@ version, you will need to move or symlink the libraries into lib/:
 
     pushd /usr/lib/
     sudo ln -s ../lib64/libgalil.so* ../lib64/libGalil.so* ./
+
+This is handled for you in a `postint` script if you install from a .deb
+generated from the included debian control files.
