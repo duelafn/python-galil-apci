@@ -9,7 +9,7 @@ Homepage: https://github.com/duelafn/python-galil-apci
 
 Package: python-galil-apci
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-jinja2, galiltools
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-jinja2, python-jinja2-apci, galiltools
 Description: APCI Galil Wrapper
  Builds a swig-generated Galil library for python. Also includes a wrapper
  with various helpful tools.

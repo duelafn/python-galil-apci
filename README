@@ -4,6 +4,7 @@ Packages Required
 -----------------
 
 * jinja2
+* jinja2_apci
 * Galil Tools (see below)
 
 
