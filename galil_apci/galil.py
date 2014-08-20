@@ -388,6 +388,7 @@ class Galil(ExternalGalil.Galil):
         except ExternalGalil.CommandError:
             return None
 
+    @classmethod
     def add_xAPI(self, program, name, hash):
         """
         Returns a modified program with required xAPI support functions.

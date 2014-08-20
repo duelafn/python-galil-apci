@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 __version__ = "1.0.0"
 
 from galil_apci.galil      import Galil
+from galil_apci.file       import GalilFile
 
 from galil_apci.parameters import *
 from galil_apci.config     import *

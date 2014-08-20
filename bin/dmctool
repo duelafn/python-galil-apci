@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 __version__ = '0.0.1'
 
+import argparse
 import re, json, sys, os
 from os.path import split, join, dirname, isdir, basename, exists, abspath
 sys.path.insert(1, dirname(dirname(abspath(__file__))))
@@ -26,7 +27,7 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger('dmctool')
 
-from galil_apci.file import GalilFile
+from galil_apci import Galil, GalilFile
 
 
 def user_conf(*name):
@@ -38,7 +39,11 @@ def user_conf(*name):
     return os.path.join(confdir, *name)
 
 
-import argparse
+def xapi_name_type(name):
+    if len(name) <= 5 and '"' not in name:
+        return name.encode('ascii')
+    raise argparse.ArgumentTypeError("xAPI name must be 5 or fewer ASCII characters long")
+
 def getopts():
     parser = argparse.ArgumentParser(description="""
 Generates files ready for use on a galil controller.
@@ -59,6 +64,7 @@ within line length and count limits.
     parser.add_argument('--minify', '-m', action='store_true', help='enable minification')
     parser.add_argument('--no-trim', '-t', action='store_true', help='show (do not trim) whitespace')
     parser.add_argument('--default', action='store_true', help='load default config without raising warning')
+    parser.add_argument('--xapi', type=xapi_name_type, metavar="NAME", help='Substitute xAPI support functions with xPrgName given')
 
     parser.add_argument('file', type=str, nargs='+', help='files to compile')
     return parser.parse_args()
@@ -88,6 +94,10 @@ def MAIN(argv):
 
         for err in gf.lint(dmc, warnings=True):
             logger.warning(err)
+
+        if argv.xapi:
+            prog_hash = Galil.computeProgramHash(dmc)
+            dmc = Galil.add_xAPI(dmc, argv.xapi, prog_hash)
 
         # Write out results
         if not argv.output or '-' == argv.output:
