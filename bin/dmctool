@@ -107,6 +107,12 @@ def MAIN(argv):
             fout = get_output(f, argv.output)
             open(fout, "w").write(dmc + "\n")
 
+        lines  = re.compile("[\r\n]+").split(dmc)
+        label_pat = re.compile("^#")
+        labels = [ l for l in lines if label_pat.match(l) ]
+
+        sys.stderr.write('Wrote dmc with {} labels on {} lines\n'.format(len(labels), len(lines)))
+
 
 
 def get_output(source, target):
