@@ -65,6 +65,7 @@ within line length and count limits.
     parser.add_argument('--no-trim', '-t', action='store_true', help='show (do not trim) whitespace')
     parser.add_argument('--default', action='store_true', help='load default config without raising warning')
     parser.add_argument('--xapi', type=xapi_name_type, metavar="NAME", help='Substitute xAPI support functions with xPrgName given')
+    parser.add_argument('--columns', type=int, default=80, help='Number of columns allowed by controller')
 
     parser.add_argument('file', type=str, nargs='+', help='files to compile')
     return parser.parse_args()
@@ -74,7 +75,7 @@ def MAIN(argv):
     for f in argv.file:
         # Build template
         (path, fname) = split(f)
-        gf = GalilFile(path if len(path) else ".")
+        gf = GalilFile(path if len(path) else ".", line_length=(argv.columns - 1))
 
         # Load Variables
         if argv.vars:
@@ -97,7 +98,7 @@ def MAIN(argv):
 
         if argv.xapi:
             prog_hash = Galil.computeProgramHash(dmc)
-            dmc = Galil.add_xAPI(dmc, argv.xapi, prog_hash)
+            dmc = Galil.add_xAPI(dmc, argv.xapi, prog_hash, columns=(argv.columns - 1))
 
         # Write out results
         if not argv.output or '-' == argv.output:

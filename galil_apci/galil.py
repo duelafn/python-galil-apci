@@ -389,7 +389,7 @@ class Galil(ExternalGalil.Galil):
             return None
 
     @classmethod
-    def add_xAPI(self, program, name, hash):
+    def add_xAPI(self, program, name, hash, columns=79):
         """
         Returns a modified program with required xAPI support functions.
 
@@ -400,11 +400,17 @@ class Galil(ExternalGalil.Galil):
         This action WILL change the length of the lines defining these
         functions so the functions definitions should be the only thing on
         the line. (shouldn't be a problem since any otimizer will leave the
-        #XXXX at the beginning of a line). This action, however, will not
-        alter the function count or line count of the program.
+        #XXXX at the beginning of a line).
+
+        if columns are too small, this function WILL modify the line count
+        in order to satisfy the column requirements. Otherwise it will not.
         """
+        xINIT = '#xINIT;xPrgName="{}";xPrgHash={};xAPIOk=0;EN\n'.format(name, hash)
+        if columns < len(xINIT):
+            xINIT = '#xINIT;xPrgName="{}";\nxPrgHash={};\nxAPIOk=0;EN\n'.format(name, hash)
+
         return program.replace(
-            "#xINIT;EN\n", '#xINIT;xPrgName="{}";xPrgHash={};xAPIOk=0;EN\n'.format(name, hash)
+            "#xINIT;EN\n", xINIT
         ).replace(
             "#xAPIOk;EN\n", '#xAPIOk;xAPIOk=xAPIOk+1;EN\n'
         )
