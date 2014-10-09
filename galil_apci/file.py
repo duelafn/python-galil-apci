@@ -114,6 +114,7 @@ class GalilFile(object):
         g["galil_hex_to_binary"] = galil_apci.Galil.galil_hex_to_binary
         g["round_galil"] = galil_apci.Galil.round
 
+        g["axis2idx"]   = axis2idx
         g["param_list"] = param_list
         g["HX"] = build_commander("HX{}")
         g["SB"] = build_commander("SB{}")

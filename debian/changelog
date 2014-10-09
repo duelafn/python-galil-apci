@@ -3,6 +3,7 @@ galil-apci (1.1.0-1) unstable; urgency=low
 
   * More support for 40-column controllers
   * DMC export summary (lines and number of labels)
+  * Expose axis2idx dictionary for setting virtual axes (~a, ...)
 
  -- Dean Serenevy <dean@serenevy.net>  Tue, 02 Sep 2014 09:38:29 -0400
 
