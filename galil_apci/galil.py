@@ -28,6 +28,7 @@ import os, re, hashlib, platform, time
 import gzip as _gzip
 import collections
 
+from datetime import datetime
 from binascii import b2a_hex
 from contextlib import closing
 import Galil as ExternalGalil
@@ -376,6 +377,22 @@ class Galil(ExternalGalil.Galil):
         except ExternalGalil.CommandError:
             return None
 
+    def getBoardProgramDate(self):
+        """
+        Returns a datetime object of the date when the on-board
+        program was compiled.
+
+        If no date is defined on the board, catches the exception and
+        returns None.
+        """
+        try:
+            date = self.command("MG {Z8.0} xPrgDate")
+            return datetime.strptime(date,'%Y%m%d')
+        except ExternalGalil.CommandError:
+            return None
+        except ValueError:
+            return None
+
     def getBoardProgramName(self):
         """
         Returns name of the program currently present on the board.
@@ -389,7 +406,7 @@ class Galil(ExternalGalil.Galil):
             return None
 
     @classmethod
-    def add_xAPI(self, program, name, hash, columns=79):
+    def add_xAPI(self, program, name, hash, date=None, columns=79):
         """
         Returns a modified program with required xAPI support functions.
 
@@ -405,9 +422,11 @@ class Galil(ExternalGalil.Galil):
         if columns are too small, this function WILL modify the line count
         in order to satisfy the column requirements. Otherwise it will not.
         """
-        xINIT = '#xINIT;xPrgName="{}";xPrgHash={};xAPIOk=0;EN\n'.format(name, hash)
+        if date is None:
+            date = datetime.today().strftime('%Y%m%d')
+        xINIT = '#xINIT;xPrgName="{}";xPrgHash={};xPrgDate={};xAPIOk=0;EN\n'.format(name, hash, date)
         if columns < len(xINIT):
-            xINIT = '#xINIT;xPrgName="{}";\nxPrgHash={};\nxAPIOk=0;EN\n'.format(name, hash)
+            xINIT = '#xINIT;xPrgName="{}"\nxPrgHash={}\nxPrgDate={}\nxAPIOk=0;EN\n'.format(name, hash, date)
 
         return program.replace(
             "#xINIT;EN\n", xINIT

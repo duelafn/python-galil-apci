@@ -1,4 +1,10 @@
 
+galil-apci (1.2.0-1) unstable; urgency=low
+
+  * Add xPrgDate to xAPI interface
+
+ -- Dean Serenevy <dean@serenevy.net>  Wed, 21 Sep 2016 17:54:35 -0400
+
 galil-apci (1.1.0-1) unstable; urgency=low
 
   * More support for 40-column controllers
