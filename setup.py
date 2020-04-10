@@ -26,7 +26,6 @@ galil_module = Extension(
     '_Galil',
     [ '_Galil.cpp' ],                            # Requires that swig called on development machine (beware version issues)
 #     [ 'swig/Galil.i' ], swig_opts = ['-c++'],  # Requires swig on client; also doesn't work
-    library_dirs = ['/usr/lib64'],               # galil installs to an improper path - no problem...
     libraries    = ['galil'],
     extra_compile_args = ['-Wno-write-strings', '-Wno-unused-but-set-variable'],
 )
