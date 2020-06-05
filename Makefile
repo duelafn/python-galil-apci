@@ -30,6 +30,9 @@ PY_SWIG += _Galil.cpp
 
 all: test build
 
+check:
+	python -m flake8 --config=extra/flake8.ini galil_apci test
+
 zip: test ${PY_SWIG}
 	python setup.py sdist --format=zip
 
