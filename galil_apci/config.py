@@ -22,7 +22,11 @@ __all__ = 'GalilConfig'.split()
 import re
 
 from functools import partial
-from .parameters import *
+from .parameters import AxisMaskParameter, AxisQueryParameter
+from .parameters import BasicParameter, BasicQueryParameter
+from .parameters import CmdParameter, EqParameter, IndexedParameter, NetworkParameter
+from .parameters import OutputBitParameter, Parameter, SSIParameter, VectorParameter
+
 
 CONFIG_PARSERS = [
     (re.compile(r'^\s*#'), None),
@@ -72,9 +76,9 @@ class GalilConfig(object):
             if isinstance(item, Parameter):
                 if not item.check():
                     changes.append("{} command on {} line {} changed from {} to {}".format(
-                            item.cmd,
-                            item.filename or 'Unknown', item.lineno or 'Unknown',
-                            item.value, item.get(refresh=False)
+                        item.cmd,
+                        item.filename or 'Unknown', item.lineno or 'Unknown',
+                        item.value, item.get(refresh=False)
                     ))
         return changes
 

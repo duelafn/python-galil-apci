@@ -24,8 +24,7 @@ Preforms useful actions on galil encoder files.
 
 from __future__ import division, absolute_import, print_function
 
-import re, sys
-import os.path
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -192,7 +191,6 @@ class GalilFile(object):
         errors = []
 
         # WARNING: Any trailing semicolon/EOL checks need to be zero-width assertions
-        p_long_name = re.compile(r"(?:^|;)[A-Z]{2}([a-zA-Z0-9_]{8})|((?:[a-z][a-zA-Z0-9_]{7}|#[a-zA-Z0-9_]{7})[a-zA-Z0-9_]+)")
         p_sub_def   = re.compile(r"(?:^|;)(#[a-zA-Z0-9_]{1,7})")
         p_sub_arg   = re.compile(r"""
                          (?:^|;)
@@ -254,7 +252,7 @@ class GalilFile(object):
                 # Note: arg includes "()"
                 JSP_sub.add(name)
                 JSP_line[name].append(lineno)
-                args = [] if len(arg)<3 else arg.split(',')
+                args = [] if len(arg) < 3 else arg.split(',')
 
                 if name in sub_neg1_dflt and arg == "(-1)":
                     # Make exception for #ok and #error
@@ -303,9 +301,9 @@ class GalilFile(object):
 
         # Comments: ', NO, REM. Do NOT need to check for word boundaries ("NOTE" is a comment)
         #
-        ## WARNING: This is INCORRECT! In galil a semicolon ends a comment
-        ## - this is crazy so I explicitly choose to have a comment kill
-        ## the rest of the line
+        # WARNING: This is INCORRECT! In galil a semicolon ends a comment
+        # - this is crazy so I explicitly choose to have a comment kill
+        # the rest of the line
         comment = re.compile(r"(?:^|;)\s*(?:'|NO|REM).*")
 
         # Operators with wrapped space. Match will be replaced with \1.

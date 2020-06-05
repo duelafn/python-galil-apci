@@ -17,8 +17,8 @@
 from __future__ import division, absolute_import, print_function
 __version__ = "1.2.0"
 
-from galil_apci.galil      import Galil
-from galil_apci.file       import GalilFile
+from galil_apci.galil      import Galil       # noqa F401
+from galil_apci.file       import GalilFile   # noqa F401
 
-from galil_apci.parameters import *
-from galil_apci.config     import *
+from galil_apci.parameters import *           # noqa F401, F403
+from galil_apci.config     import *           # noqa F401, F403

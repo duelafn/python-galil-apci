@@ -17,7 +17,8 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 import unittest2
 
-import sys, json
+import json
+import sys
 from os.path import dirname, abspath
 sys.path.insert(1, dirname(dirname(abspath(__file__))))
 

@@ -24,9 +24,12 @@ from __future__ import division, absolute_import, print_function
 __all__ = 'Galil'.split()
 
 
-import os, re, hashlib, platform, time
-import gzip as _gzip
 import collections
+import gzip as _gzip
+import hashlib
+import os
+import re
+import time
 
 from datetime import datetime
 from binascii import b2a_hex
