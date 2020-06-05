@@ -27,6 +27,7 @@ IndexedParameter VectorParameter NetworkParameter
 '''.split()
 
 import struct
+import Galil as ExternalGalil
 
 from .galil import Galil
 
