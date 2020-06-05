@@ -517,7 +517,7 @@ class Galil(ExternalGalil.Galil):
             try:
                 self.command('XQ#AUTO')
                 time.sleep(0.5)
-            except:
+            except Exception:
                 self["xPrgOK"] = 0
                 return self.ensureBoardProgram(name, program, run_auto, force=True)
 
